@@ -1,0 +1,32 @@
+name: 'Purge docker container github'
+description: 'Purge docker container'
+inputs:
+  packageType:
+    description: 'packageType'
+    required: true
+    default: 'container'
+  packageName:
+    description: 'packageName'
+    required: true
+  organisation:
+    description: 'organisation'
+    required: true
+  token:
+    description: 'token'
+    required: true
+  pagination:
+    description: 'pagination'
+    default: 100
+  keepDays:
+    description: 'how many days before eligible for delete'
+    default: 15
+  dryRun:
+    description: 'Dry run'
+    default: false
+  logLevel:
+    description: 'Log level (trace, debug, info, warn, error)'
+    default: 'info'
+outputs:
+runs:
+  using: 'node12'
+  main: 'dist/index.js'

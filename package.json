@@ -1,0 +1,22 @@
+{
+  "name": "purge-docker-registry-action",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "ncc build src/index.js -o dist --source-map"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@actions/core": "^1.2.6",
+    "@actions/github": "^4.0.0",
+    "loglevel": "^1.7.1",
+    "parse-link-header": "^1.0.1"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.28.1"
+  }
+}
