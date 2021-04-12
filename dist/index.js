@@ -6295,25 +6295,64 @@ function handleInputs() {
         logLevel: log.getLevel(),
         dryRun: (core.getInput('dryRun')=='true'),
     }
+    if (inputs.dryRun) {
+        log.warn('📢 Dry run - nothing will be deleted')
+    }
     log.debug(`inputs: ${JSON.stringify(inputs, null, 4)}`);
     return inputs;
 }
 
+/* every item of b is in a */
 function includesAll(a, b) {
     return b.every(v => a.includes(v));
 }
 
-function semVerProd(versions) {
+function semVerProd(tags) {
     const regex = new RegExp(SEMVERREGEXP);
-    for (const env of Object.keys(versions)) {
-        if (env.match(regex) == env) {
-            return true;
-        }
-    }
-    return false;
+    return tags.reduce((result, tag) => {
+        return result || (tag.match(regex) == tag);
+    }, false);
 }
 
-module.exports = { splitEnv, handleInputs, includesAll, semVerProd };
+function identifyVersion(tags) {
+    return tags.reduce((result, tag) => {
+        const splitTag = splitEnv(tag, '-', 1);
+        result[splitTag[0]] = splitTag[1] || true;
+        return result;
+    },{});
+}
+
+function getVersionsForDeletion(inputs, versions) {
+    const toDelete = [];
+    let oneTag = [];
+    let oneWithoutTag = false;
+    versions.forEach((version) => {
+        if (inputs.limitDate > new Date(version.date)) {
+            if (!version.tags.length) {
+                if (oneWithoutTag) {
+                    toDelete.push(version);
+                }
+                oneWithoutTag = true;
+            } else {
+                const tagEnv = identifyVersion(version.tags);
+                const keysEnv = Object.keys(tagEnv);
+
+                if (includesAll(oneTag, keysEnv) && !semVerProd(keysEnv)) {
+                    toDelete.push(version);
+                }
+                oneTag = [...new Set([...oneTag ,...keysEnv])];
+            }
+        }
+    });
+    log.info(`Select ${toDelete.length} items for deletion`);
+    log.debug(toDelete);
+    core.setOutput("deleted", toDelete);
+    log.info(`Keeping 1 expired tag for : ${oneTag}`);
+    core.setOutput("envlist", oneTag);
+    return toDelete;
+}
+
+module.exports = { splitEnv, handleInputs, includesAll, semVerProd, getVersionsForDeletion, identifyVersion };
 
 
 /***/ }),
@@ -6471,57 +6510,13 @@ module.exports = require("zlib");;
 /******/ 	}
 /******/ 	
 /************************************************************************/
-/******/ 	/* webpack/runtime/compat get default export */
-/******/ 	(() => {
-/******/ 		// getDefaultExport function for compatibility with non-harmony modules
-/******/ 		__nccwpck_require__.n = (module) => {
-/******/ 			var getter = module && module.__esModule ?
-/******/ 				() => (module['default']) :
-/******/ 				() => (module);
-/******/ 			__nccwpck_require__.d(getter, { a: getter });
-/******/ 			return getter;
-/******/ 		};
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/define property getters */
-/******/ 	(() => {
-/******/ 		// define getter functions for harmony exports
-/******/ 		__nccwpck_require__.d = (exports, definition) => {
-/******/ 			for(var key in definition) {
-/******/ 				if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
-/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 				}
-/******/ 			}
-/******/ 		};
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
-/******/ 	(() => {
-/******/ 		__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/make namespace object */
-/******/ 	(() => {
-/******/ 		// define __esModule on exports
-/******/ 		__nccwpck_require__.r = (exports) => {
-/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 			}
-/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 		};
-/******/ 	})();
-/******/ 	
 /******/ 	/* webpack/runtime/compat */
 /******/ 	
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";/************************************************************************/
 var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be in strict mode.
+// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
-"use strict";
-__nccwpck_require__.r(__webpack_exports__);
-/* harmony import */ var parse_link_header__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(940);
-/* harmony import */ var parse_link_header__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(parse_link_header__WEBPACK_IMPORTED_MODULE_0__);
-
+const parse = __nccwpck_require__(940);
 const utils = __nccwpck_require__(608);
 const github = __nccwpck_require__(438);
 const log = __nccwpck_require__(63);
@@ -6530,7 +6525,6 @@ const core = __nccwpck_require__(186);
 async function deleteVersions(inputs, versions) {
     for (const version of versions) {
         log.debug(`Removing version id: ${version.id}`);
-        //Question: do I have async call here ? => multi thread ?
         deleteVersion(inputs, version.id).then(() => {
             log.info(`✅ Version with id: ${version.id} removed`);
         }).catch((error) => {
@@ -6556,7 +6550,7 @@ async function deleteVersion(inputs, versionId) {
     return result;
 }
 
-async function getOrderedVersions(inputs, page=1)  {
+async function getVersions(inputs, page=1)  {
     const images = [];
     const octokit = github.getOctokit(inputs.token);
 
@@ -6572,14 +6566,17 @@ async function getOrderedVersions(inputs, page=1)  {
 
     images.push(...result.data);
 
-    const pagination = parse_link_header__WEBPACK_IMPORTED_MODULE_0__(result.headers.link);
+    const pagination = parse(result.headers.link);
     if (pagination && pagination.next) {
         const response = await getVersions(inputs, parseInt(pagination.next.page));
         images.push(...response);
     }
+    return images;
+}
 
+async function getOrderedVersions(inputs, page=1)  {
+    const images = await getVersions(inputs, page=1);
     log.info(`Found ${images.length} docker images in ${inputs.packageName}`);
-
     return images.reduce((versions, version) => {
         return [...versions, { id: version.id, date: version.updated_at, tags: version.metadata.container.tags }]
     }, []).sort(function(a,b){
@@ -6587,50 +6584,13 @@ async function getOrderedVersions(inputs, page=1)  {
     });
 }
 
-function identifyVersion(tags) {
-    return tags.reduce((result, tag) => {
-        const splitTag = utils.splitEnv(tag, '-', 1);
-        result[splitTag[0]] = splitTag[1] || true;
-        return result;
-    },{});
-}
-
-function getVersionsForDeletion(inputs, versions) {
-    const toDelete = [];
-    let oneTag = [];
-    let oneWithoutTag = false;
-    versions.forEach((version) => {
-        if (!version.tags.length) {
-            if (oneWithoutTag && inputs.limitDate > new Date(version.date)) {
-                toDelete.push(version);
-            }
-            oneWithoutTag = true;
-        } else {
-            if (inputs.limitDate > new Date(version.date)) {
-                const tagEnv = identifyVersion(version.tags);
-                const keysEnv = Object.keys(tagEnv);
-
-                if (utils.includesAll(oneTag, keysEnv) && !utils.semVerProd(tagEnv)) {
-                    toDelete.push(version);
-                }
-                oneTag = [...new Set([...oneTag ,...keysEnv])];
-            }
-        }
-    });
-    log.info(`Selected ${toDelete.length} items for deletion`);
-    log.debug(toDelete);
-    log.info(`Keeping 1 expired tag for : ${oneTag}`);
-    return toDelete;
-}
-
 async function run() {
     try {
         console.log('::group::🚀 Running Purge docker registry');
         const inputs = utils.handleInputs();
         const versions = await getOrderedVersions(inputs);
-        const versionsForDeletion = getVersionsForDeletion(inputs, versions);
+        const versionsForDeletion = utils.getVersionsForDeletion(inputs, versions);
         if(!inputs.dryRun) {
-            // Await assure me final completion of all delete ?
             await deleteVersions(inputs, versionsForDeletion);
         }
     } catch (error) {

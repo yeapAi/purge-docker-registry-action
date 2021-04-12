@@ -31,22 +31,61 @@ function handleInputs() {
         logLevel: log.getLevel(),
         dryRun: (core.getInput('dryRun')=='true'),
     }
+    if (inputs.dryRun) {
+        log.warn('📢 Dry run - nothing will be deleted')
+    }
     log.debug(`inputs: ${JSON.stringify(inputs, null, 4)}`);
     return inputs;
 }
 
+/* every item of b is in a */
 function includesAll(a, b) {
     return b.every(v => a.includes(v));
 }
 
-function semVerProd(versions) {
+function semVerProd(tags) {
     const regex = new RegExp(SEMVERREGEXP);
-    for (const env of Object.keys(versions)) {
-        if (env.match(regex) == env) {
-            return true;
-        }
-    }
-    return false;
+    return tags.reduce((result, tag) => {
+        return result || (tag.match(regex) == tag);
+    }, false);
 }
 
-module.exports = { splitEnv, handleInputs, includesAll, semVerProd };
+function identifyVersion(tags) {
+    return tags.reduce((result, tag) => {
+        const splitTag = splitEnv(tag, '-', 1);
+        result[splitTag[0]] = splitTag[1] || true;
+        return result;
+    },{});
+}
+
+function getVersionsForDeletion(inputs, versions) {
+    const toDelete = [];
+    let oneTag = [];
+    let oneWithoutTag = false;
+    versions.forEach((version) => {
+        if (inputs.limitDate > new Date(version.date)) {
+            if (!version.tags.length) {
+                if (oneWithoutTag) {
+                    toDelete.push(version);
+                }
+                oneWithoutTag = true;
+            } else {
+                const tagEnv = identifyVersion(version.tags);
+                const keysEnv = Object.keys(tagEnv);
+
+                if (includesAll(oneTag, keysEnv) && !semVerProd(keysEnv)) {
+                    toDelete.push(version);
+                }
+                oneTag = [...new Set([...oneTag ,...keysEnv])];
+            }
+        }
+    });
+    log.info(`Select ${toDelete.length} items for deletion`);
+    log.debug(toDelete);
+    core.setOutput("deleted", toDelete);
+    log.info(`Keeping 1 expired tag for : ${oneTag}`);
+    core.setOutput("envlist", oneTag);
+    return toDelete;
+}
+
+module.exports = { splitEnv, handleInputs, includesAll, semVerProd, getVersionsForDeletion, identifyVersion };

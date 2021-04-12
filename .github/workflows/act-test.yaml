@@ -1,20 +1,8 @@
-name: 'build-test'
-on:
-  pull_request:
-  push:
-    branches:
-      - main
+name: 'act-test'
+on: workflow_dispatch
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - run: |
-          npm install
-      - run: |
-          npm run build
-  test:
+  act-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -25,3 +13,5 @@ jobs:
           packageName: yeap-ui-modelisation
           organisation: yeapAi
           token: ${{ secrets.GITHUB_TOKEN }}
+          dryRun: true
+          logLevel: trace

@@ -6,6 +6,15 @@ Github action to remove Yeap old docker image.
 - This action doesn't remove image with a tag starting with a production version ( vX.Y.Z )
 - This action doesn't remove the last version outside of the conservation period for every environnement
 
+## local test with act
+
+- install [act](https://github.com/nektos/act)
+- run :
+
+```console
+npm run build && act -j act-test -P ubuntu-latest=nektos/act-environments-ubuntu:18.04 -s GITHUB_TOKEN=XXXXXXXXXXX
+```
+
 ## Exemples
 
 ### Exemple with 3 versions out of the conservation period
@@ -39,7 +48,3 @@ version: 3, tag; dev-test
 version: 4, tag; v1.1.1-preview
 
 Only the version 3 will be removed because version 2 has a production tag and count for dev environment
-
-
-
-

@@ -27,6 +27,10 @@ inputs:
     description: 'Log level (trace, debug, info, warn, error)'
     default: 'info'
 outputs:
+  deleted:
+    desciption: 'Versions selected for deletion'
+  envlist:
+    description: 'Env list from keep list'
 runs:
   using: 'node12'
   main: 'dist/index.js'
