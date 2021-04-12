@@ -18,7 +18,7 @@ inputs:
     description: 'pagination'
     default: 100
   keepDays:
-    description: 'how many days before eligible for delete'
+    description: 'how many days before eligible for deletion'
     default: 15
   dryRun:
     description: 'Dry run'
