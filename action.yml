@@ -28,7 +28,7 @@ inputs:
     default: 'info'
 outputs:
   deleted:
-    desciption: 'Versions selected for deletion'
+    description: 'Versions selected for deletion'
   envlist:
     description: 'Env list from keep list'
 runs:
