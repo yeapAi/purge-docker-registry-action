@@ -1,10 +1,10 @@
-import * as core from '@actions/core';
-import * as log from 'loglevel';
+const log = require('loglevel');
+const core = require('@actions/core');
 
 const SEMVERREGEXP = /v[0-9]*\.[0-9]*\.[0-9]*(\.[0-9]*)?/g;
 
 /* A function that splits a string `limit` times and adds the remainder as a final array index. */
-export function splitEnv(str, separator, limit) {
+function splitEnv(str, separator, limit) {
     let result = str.split(separator);
     if(result.length > limit) {
         const ret = result.splice(0, limit);
@@ -13,7 +13,7 @@ export function splitEnv(str, separator, limit) {
     return result;
 }
 
-export function handleInputs() {
+function handleInputs() {
     log.setDefaultLevel(log.levels.INFO);
     if (!Object.keys(log.levels).includes(core.getInput('logLevel').toUpperCase())) {
         log.warn('📢 logLevel not recognized: using default loglevel : info');
@@ -39,18 +39,18 @@ export function handleInputs() {
 }
 
 /* every item of b is in a */
-export function includesAll(a, b) {
+function includesAll(a, b) {
     return b.every(v => a.includes(v));
 }
 
-export function semVerProd(tags) {
+function semVerProd(tags) {
     const regex = new RegExp(SEMVERREGEXP);
     return tags.reduce((result, tag) => {
         return result || (tag.match(regex) == tag);
     }, false);
 }
 
-export function identifyVersion(tags) {
+function identifyVersion(tags) {
     return tags.reduce((result, tag) => {
         const splitTag = splitEnv(tag, '-', 1);
         result[splitTag[0]] = splitTag[1] || true;
@@ -58,7 +58,7 @@ export function identifyVersion(tags) {
     },{});
 }
 
-export function getVersionsForDeletion(inputs, versions) {
+function getVersionsForDeletion(inputs, versions) {
     const toDelete = [];
     let oneTag = [];
     let oneWithoutTag = false;
@@ -87,3 +87,5 @@ export function getVersionsForDeletion(inputs, versions) {
     core.setOutput("envlist", oneTag);
     return toDelete;
 }
+
+module.exports = { splitEnv, handleInputs, includesAll, semVerProd, getVersionsForDeletion, identifyVersion };

@@ -1,8 +1,8 @@
-import * as parse from 'parse-link-header';
-import * as github from '@actions/github';
-import * as core from '@actions/core';
-import * as log from 'loglevel';
-import { splitEnv, handleInputs, includesAll, semVerProd, getVersionsForDeletion, identifyVersion } from './utils';
+const parse = require('parse-link-header');
+const utils = require('./utils');
+const github = require('@actions/github');
+const log = require('loglevel');
+const core = require('@actions/core');
 
 function deleteVersions(inputs, versions) {
     for (const version of versions) {
@@ -64,10 +64,10 @@ async function getOrderedVersions(inputs, page=1)  {
 
 async function run() {
     try {
-        core.info('::group:: 🚀 Running Purge docker registry');
-        const inputs = handleInputs();
+        core.info('::group::🚀 Running Purge docker registry');
+        const inputs = utils.handleInputs();
         const versions = await getOrderedVersions(inputs);
-        const versionsForDeletion = getVersionsForDeletion(inputs, versions);
+        const versionsForDeletion = utils.getVersionsForDeletion(inputs, versions);
         if(!inputs.dryRun) {
             await deleteVersions(inputs, versionsForDeletion);
         }

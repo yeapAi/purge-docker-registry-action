@@ -130,34 +130,3 @@ test('getVersionsForDeletion 3 empty tags with 2 too old' , () => {
     core.setOutput.mockResolvedValue(true);
     expect(utils.getVersionsForDeletion({ limitDate: d.getTime() }, versions)).toMatchObject([version3]);
 });
-
-
-// function getVersionsForDeletion(inputs, versions) {
-//     const toDelete = [];
-//     let oneTag = [];
-//     let oneWithoutTag = false;
-//     versions.forEach((version) => {
-//         if (!version.tags.length) {
-//             if (oneWithoutTag && inputs.limitDate > new Date(version.date)) {
-//                 toDelete.push(version);
-//             }
-//             oneWithoutTag = true;
-//         } else {
-//             if (inputs.limitDate > new Date(version.date)) {
-//                 const tagEnv = identifyVersion(version.tags);
-//                 const keysEnv = Object.keys(tagEnv);
-
-//                 if (includesAll(oneTag, keysEnv) && !semVerProd(keysEnv)) {
-//                     toDelete.push(version);
-//                 }
-//                 oneTag = [...new Set([...oneTag ,...keysEnv])];
-//             }
-//         }
-//     });
-//     log.info(`Select ${toDelete.length} items for deletion`);
-//     log.debug(toDelete);
-//     core.setOutput("deleted", toDelete);
-//     log.info(`Keeping 1 expired tag for : ${oneTag}`);
-//     core.setOutput("envlist", oneTag);
-//     return toDelete;
-// }
