@@ -1,7 +1,7 @@
 require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 241:
+/***/ 351:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -14,7 +14,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const os = __importStar(__nccwpck_require__(87));
+const os = __importStar(__nccwpck_require__(365));
 const utils_1 = __nccwpck_require__(278);
 /**
  * Commands
@@ -109,10 +109,10 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const command_1 = __nccwpck_require__(241);
+const command_1 = __nccwpck_require__(351);
 const file_command_1 = __nccwpck_require__(717);
 const utils_1 = __nccwpck_require__(278);
-const os = __importStar(__nccwpck_require__(87));
+const os = __importStar(__nccwpck_require__(365));
 const path = __importStar(__nccwpck_require__(622));
 /**
  * The code to exit an action
@@ -349,7 +349,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 // We use any as a valid input type
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const fs = __importStar(__nccwpck_require__(747));
-const os = __importStar(__nccwpck_require__(87));
+const os = __importStar(__nccwpck_require__(365));
 const utils_1 = __nccwpck_require__(278);
 function issueCommand(command, message) {
     const filePath = process.env[`GITHUB_${command}`];
@@ -394,7 +394,7 @@ exports.toCommandValue = toCommandValue;
 
 /***/ }),
 
-/***/ 53:
+/***/ 87:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -402,7 +402,7 @@ exports.toCommandValue = toCommandValue;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Context = void 0;
 const fs_1 = __nccwpck_require__(747);
-const os_1 = __nccwpck_require__(87);
+const os_1 = __nccwpck_require__(365);
 class Context {
     /**
      * Hydrate the context from the environment
@@ -477,7 +477,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getOctokit = exports.context = void 0;
-const Context = __importStar(__nccwpck_require__(53));
+const Context = __importStar(__nccwpck_require__(87));
 const utils_1 = __nccwpck_require__(30);
 exports.context = new Context.Context();
 /**
@@ -570,7 +570,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getOctokitOptions = exports.GitHub = exports.context = void 0;
-const Context = __importStar(__nccwpck_require__(53));
+const Context = __importStar(__nccwpck_require__(87));
 const Utils = __importStar(__nccwpck_require__(914));
 // octokit + plugins
 const core_1 = __nccwpck_require__(762);
@@ -6259,104 +6259,6 @@ function extend() {
 
 /***/ }),
 
-/***/ 608:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-const core = __nccwpck_require__(186);
-const log = __nccwpck_require__(63);
-
-const SEMVERREGEXP = /v[0-9]*\.[0-9]*\.[0-9]*(\.[0-9]*)?/g;
-
-/* A function that splits a string `limit` times and adds the remainder as a final array index. */
-function splitEnv(str, separator, limit) {
-    let result = str.split(separator);
-    if(result.length > limit) {
-        const ret = result.splice(0, limit);
-        result = [...ret, result.join(separator)];
-    }
-    return result;
-}
-
-function handleInputs() {
-    log.setDefaultLevel(log.levels.INFO);
-    if (!Object.keys(log.levels).includes(core.getInput('logLevel').toUpperCase())) {
-        log.warn('📢 logLevel not recognized: using default loglevel:info');
-    } else {
-        log.setLevel(core.getInput('logLevel'));
-    }
-    const inputs = {
-        packageType: core.getInput('packageType'),
-        packageName: core.getInput('packageName'),
-        organisation: core.getInput('organisation'),
-        token: core.getInput('token'),
-        pagination: core.getInput('pagination'),
-        keepDays: core.getInput('keepDays'),
-        limitDate: new Date().getTime() - (core.getInput('keepDays') * 24 * 60 * 60 * 1000),
-        logLevel: log.getLevel(),
-        dryRun: (core.getInput('dryRun')=='true'),
-    }
-    if (inputs.dryRun) {
-        log.warn('📢 Dry run - nothing will be deleted')
-    }
-    log.debug(`inputs: ${JSON.stringify(inputs, null, 4)}`);
-    return inputs;
-}
-
-/* every item of b is in a */
-function includesAll(a, b) {
-    return b.every(v => a.includes(v));
-}
-
-function semVerProd(tags) {
-    const regex = new RegExp(SEMVERREGEXP);
-    return tags.reduce((result, tag) => {
-        return result || (tag.match(regex) == tag);
-    }, false);
-}
-
-function identifyVersion(tags) {
-    return tags.reduce((result, tag) => {
-        const splitTag = splitEnv(tag, '-', 1);
-        result[splitTag[0]] = splitTag[1] || true;
-        return result;
-    },{});
-}
-
-function getVersionsForDeletion(inputs, versions) {
-    const toDelete = [];
-    let oneTag = [];
-    let oneWithoutTag = false;
-    versions.forEach((version) => {
-        if (inputs.limitDate > new Date(version.date)) {
-            if (!version.tags.length) {
-                if (oneWithoutTag) {
-                    toDelete.push(version);
-                }
-                oneWithoutTag = true;
-            } else {
-                const tagEnv = identifyVersion(version.tags);
-                const keysEnv = Object.keys(tagEnv);
-
-                if (includesAll(oneTag, keysEnv) && !semVerProd(keysEnv)) {
-                    toDelete.push(version);
-                }
-                oneTag = [...new Set([...oneTag ,...keysEnv])];
-            }
-        }
-    });
-    log.info(`Select ${toDelete.length} items for deletion`);
-    log.debug(toDelete);
-    core.setOutput("deleted", toDelete);
-    log.info(`Keeping 1 expired tag for : ${oneTag}`);
-    core.setOutput("envlist", oneTag);
-    return toDelete;
-}
-
-module.exports = { splitEnv, handleInputs, includesAll, semVerProd, getVersionsForDeletion, identifyVersion };
-
-
-/***/ }),
-
 /***/ 877:
 /***/ ((module) => {
 
@@ -6413,7 +6315,7 @@ module.exports = require("net");;
 
 /***/ }),
 
-/***/ 87:
+/***/ 365:
 /***/ ((module) => {
 
 "use strict";
@@ -6510,40 +6412,153 @@ module.exports = require("zlib");;
 /******/ 	}
 /******/ 	
 /************************************************************************/
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__nccwpck_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/compat */
 /******/ 	
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";/************************************************************************/
 var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
+// This entry need to be wrapped in an IIFE because it need to be in strict mode.
 (() => {
-const parse = __nccwpck_require__(940);
-const utils = __nccwpck_require__(608);
-const github = __nccwpck_require__(438);
-const log = __nccwpck_require__(63);
-const core = __nccwpck_require__(186);
+"use strict";
+// ESM COMPAT FLAG
+__nccwpck_require__.r(__webpack_exports__);
 
-async function deleteVersions(inputs, versions) {
+// EXTERNAL MODULE: ./node_modules/parse-link-header/index.js
+var parse_link_header = __nccwpck_require__(940);
+// EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
+var github = __nccwpck_require__(438);
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
+var core = __nccwpck_require__(186);
+// EXTERNAL MODULE: ./node_modules/loglevel/lib/loglevel.js
+var loglevel = __nccwpck_require__(63);
+;// CONCATENATED MODULE: ./src/utils.js
+
+
+
+const SEMVERREGEXP = /v[0-9]*\.[0-9]*\.[0-9]*(\.[0-9]*)?/g;
+
+/* A function that splits a string `limit` times and adds the remainder as a final array index. */
+function splitEnv(str, separator, limit) {
+    let result = str.split(separator);
+    if(result.length > limit) {
+        const ret = result.splice(0, limit);
+        result = [...ret, result.join(separator)];
+    }
+    return result;
+}
+
+function handleInputs() {
+    loglevel.setDefaultLevel(loglevel.levels.INFO);
+    if (!Object.keys(loglevel.levels).includes(core.getInput('logLevel').toUpperCase())) {
+        loglevel.warn('📢 logLevel not recognized: using default loglevel : info');
+    } else {
+        loglevel.setLevel(core.getInput('logLevel'));
+    }
+    const inputs = {
+        packageType: core.getInput('packageType'),
+        packageName: core.getInput('packageName'),
+        organisation: core.getInput('organisation'),
+        token: core.getInput('token'),
+        pagination: core.getInput('pagination'),
+        keepDays: core.getInput('keepDays'),
+        limitDate: new Date().getTime() - (core.getInput('keepDays') * 24 * 60 * 60 * 1000),
+        logLevel: loglevel.getLevel(),
+        dryRun: (core.getInput('dryRun')=='true'),
+    }
+    if (inputs.dryRun) {
+        core.info('📢 Dry run - nothing will be deleted');
+    }
+    loglevel.debug(`inputs: ${JSON.stringify(inputs, null, 4)}`);
+    return inputs;
+}
+
+/* every item of b is in a */
+function includesAll(a, b) {
+    return b.every(v => a.includes(v));
+}
+
+function semVerProd(tags) {
+    const regex = new RegExp(SEMVERREGEXP);
+    return tags.reduce((result, tag) => {
+        return result || (tag.match(regex) == tag);
+    }, false);
+}
+
+function identifyVersion(tags) {
+    return tags.reduce((result, tag) => {
+        const splitTag = splitEnv(tag, '-', 1);
+        result[splitTag[0]] = splitTag[1] || true;
+        return result;
+    },{});
+}
+
+function getVersionsForDeletion(inputs, versions) {
+    const toDelete = [];
+    let oneTag = [];
+    let oneWithoutTag = false;
+    versions.forEach((version) => {
+        if (inputs.limitDate > new Date(version.date)) {
+            if (!version.tags.length) {
+                if (oneWithoutTag) {
+                    toDelete.push(version);
+                }
+                oneWithoutTag = true;
+            } else {
+                const tagEnv = identifyVersion(version.tags);
+                const keysEnv = Object.keys(tagEnv);
+
+                if (includesAll(oneTag, keysEnv) && !semVerProd(keysEnv)) {
+                    toDelete.push(version);
+                }
+                oneTag = [...new Set([...oneTag ,...keysEnv])];
+            }
+        }
+    });
+    loglevel.info(`Select ${toDelete.length} items for deletion`);
+    loglevel.debug(toDelete);
+    core.setOutput("deleted", toDelete);
+    loglevel.info(`Keeping 1 expired tag for : ${oneTag}`);
+    core.setOutput("envlist", oneTag);
+    return toDelete;
+}
+
+;// CONCATENATED MODULE: ./src/index.js
+
+
+
+
+
+
+function deleteVersions(inputs, versions) {
     for (const version of versions) {
-        log.debug(`Removing version id: ${version.id}`);
+        loglevel.debug(`Removing version id: ${version.id}`);
         deleteVersion(inputs, version.id).then(() => {
-            log.info(`✅ Version with id: ${version.id} removed`);
+            loglevel.info(`✅ Version with id: ${version.id} removed`);
         }).catch((error) => {
-            log.error(`❗️ ${error}`);
+            loglevel.error(`❗️ ${error}`);
             core.setFailed(error.message);
         });
     }
 }
 
 async function deleteVersion(inputs, versionId) {
-    log.debug(`Querying: GET /orgs/${inputs.organisation}/packages/${inputs.packageType}/${inputs.packageName}/versions`);
-    // TO DO uncomment final version
-    // const result = await octokit.request('DELETE  /orgs/{org}/packages/{package_type}/{package_name}/versions/{package_version_id}', {
-    //     org: inputs.organisation,
-    //     package_type: inputs.packageType,
-    //     package_name: inputs.packageName,
-    //     package_version_id: versionId,
-    // });
-    let result ={status: '200'};
+    loglevel.debug(`Querying: GET /orgs/${inputs.organisation}/packages/${inputs.packageType}/${inputs.packageName}/versions`);
+    const result = await octokit.request('DELETE  /orgs/{org}/packages/{package_type}/{package_name}/versions/{package_version_id}', {
+        org: inputs.organisation,
+        package_type: inputs.packageType,
+        package_name: inputs.packageName,
+        package_version_id: versionId,
+    });
     if(!result || result.status != '200') {
         throw `Error during deletion of id: ${versionId}`;
     }
@@ -6553,9 +6568,7 @@ async function deleteVersion(inputs, versionId) {
 async function getVersions(inputs, page=1)  {
     const images = [];
     const octokit = github.getOctokit(inputs.token);
-
-    log.debug(`Querying: GET /orgs/${inputs.organisation}/packages/${inputs.packageType}/${inputs.packageName}/versions`);
-
+    loglevel.debug(`Querying: GET /orgs/${inputs.organisation}/packages/${inputs.packageType}/${inputs.packageName}/versions`);
     const result = await octokit.request('GET /orgs/{org}/packages/{package_type}/{package_name}/versions', {
         org: inputs.organisation,
         package_type: inputs.packageType,
@@ -6566,7 +6579,7 @@ async function getVersions(inputs, page=1)  {
 
     images.push(...result.data);
 
-    const pagination = parse(result.headers.link);
+    const pagination = parse_link_header(result.headers.link);
     if (pagination && pagination.next) {
         const response = await getVersions(inputs, parseInt(pagination.next.page));
         images.push(...response);
@@ -6576,7 +6589,7 @@ async function getVersions(inputs, page=1)  {
 
 async function getOrderedVersions(inputs, page=1)  {
     const images = await getVersions(inputs, page=1);
-    log.info(`Found ${images.length} docker images in ${inputs.packageName}`);
+    loglevel.info(`Found ${images.length} docker images in ${inputs.packageName}`);
     return images.reduce((versions, version) => {
         return [...versions, { id: version.id, date: version.updated_at, tags: version.metadata.container.tags }]
     }, []).sort(function(a,b){
@@ -6586,17 +6599,17 @@ async function getOrderedVersions(inputs, page=1)  {
 
 async function run() {
     try {
-        console.log('::group::🚀 Running Purge docker registry');
-        const inputs = utils.handleInputs();
+        core.info('::group:: 🚀 Running Purge docker registry');
+        const inputs = handleInputs();
         const versions = await getOrderedVersions(inputs);
-        const versionsForDeletion = utils.getVersionsForDeletion(inputs, versions);
+        const versionsForDeletion = getVersionsForDeletion(inputs, versions);
         if(!inputs.dryRun) {
             await deleteVersions(inputs, versionsForDeletion);
         }
     } catch (error) {
         core.setFailed(error.message);
     } finally {
-        console.log('::endgroup::');
+        core.info('::endgroup::');
     }
 }
 

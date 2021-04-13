@@ -1,0 +1,28 @@
+name: 'release'
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - run: npm ci
+      - run: npm run build
+      - name: Release
+        id: semantic
+        uses: codfish/semantic-release-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Output new version
+        run: echo ${{ steps.semantic.outputs.release-version }}
+      - name: Fail if version is empty
+        if: steps.semantic.outputs.release-version == ''
+        run: exit 1
+

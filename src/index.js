@@ -1,10 +1,10 @@
-const parse = require('parse-link-header');
-const utils = require('./utils');
-const github = require('@actions/github');
-const log = require('loglevel');
-const core = require('@actions/core');
+import * as parse from 'parse-link-header';
+import * as github from '@actions/github';
+import * as core from '@actions/core';
+import * as log from 'loglevel';
+import { splitEnv, handleInputs, includesAll, semVerProd, getVersionsForDeletion, identifyVersion } from './utils';
 
-async function deleteVersions(inputs, versions) {
+function deleteVersions(inputs, versions) {
     for (const version of versions) {
         log.debug(`Removing version id: ${version.id}`);
         deleteVersion(inputs, version.id).then(() => {
@@ -18,14 +18,12 @@ async function deleteVersions(inputs, versions) {
 
 async function deleteVersion(inputs, versionId) {
     log.debug(`Querying: GET /orgs/${inputs.organisation}/packages/${inputs.packageType}/${inputs.packageName}/versions`);
-    // TO DO uncomment final version
-    // const result = await octokit.request('DELETE  /orgs/{org}/packages/{package_type}/{package_name}/versions/{package_version_id}', {
-    //     org: inputs.organisation,
-    //     package_type: inputs.packageType,
-    //     package_name: inputs.packageName,
-    //     package_version_id: versionId,
-    // });
-    let result ={status: '200'};
+    const result = await octokit.request('DELETE  /orgs/{org}/packages/{package_type}/{package_name}/versions/{package_version_id}', {
+        org: inputs.organisation,
+        package_type: inputs.packageType,
+        package_name: inputs.packageName,
+        package_version_id: versionId,
+    });
     if(!result || result.status != '200') {
         throw `Error during deletion of id: ${versionId}`;
     }
@@ -35,9 +33,7 @@ async function deleteVersion(inputs, versionId) {
 async function getVersions(inputs, page=1)  {
     const images = [];
     const octokit = github.getOctokit(inputs.token);
-
     log.debug(`Querying: GET /orgs/${inputs.organisation}/packages/${inputs.packageType}/${inputs.packageName}/versions`);
-
     const result = await octokit.request('GET /orgs/{org}/packages/{package_type}/{package_name}/versions', {
         org: inputs.organisation,
         package_type: inputs.packageType,
@@ -68,17 +64,17 @@ async function getOrderedVersions(inputs, page=1)  {
 
 async function run() {
     try {
-        console.log('::group::🚀 Running Purge docker registry');
-        const inputs = utils.handleInputs();
+        core.info('::group:: 🚀 Running Purge docker registry');
+        const inputs = handleInputs();
         const versions = await getOrderedVersions(inputs);
-        const versionsForDeletion = utils.getVersionsForDeletion(inputs, versions);
+        const versionsForDeletion = getVersionsForDeletion(inputs, versions);
         if(!inputs.dryRun) {
             await deleteVersions(inputs, versionsForDeletion);
         }
     } catch (error) {
         core.setFailed(error.message);
     } finally {
-        console.log('::endgroup::');
+        core.info('::endgroup::');
     }
 }
 

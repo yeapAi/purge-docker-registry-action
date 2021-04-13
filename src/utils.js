@@ -1,10 +1,10 @@
-const core = require('@actions/core');
-const log = require('loglevel');
+import * as core from '@actions/core';
+import * as log from 'loglevel';
 
 const SEMVERREGEXP = /v[0-9]*\.[0-9]*\.[0-9]*(\.[0-9]*)?/g;
 
 /* A function that splits a string `limit` times and adds the remainder as a final array index. */
-function splitEnv(str, separator, limit) {
+export function splitEnv(str, separator, limit) {
     let result = str.split(separator);
     if(result.length > limit) {
         const ret = result.splice(0, limit);
@@ -13,10 +13,10 @@ function splitEnv(str, separator, limit) {
     return result;
 }
 
-function handleInputs() {
+export function handleInputs() {
     log.setDefaultLevel(log.levels.INFO);
     if (!Object.keys(log.levels).includes(core.getInput('logLevel').toUpperCase())) {
-        log.warn('📢 logLevel not recognized: using default loglevel:info');
+        log.warn('📢 logLevel not recognized: using default loglevel : info');
     } else {
         log.setLevel(core.getInput('logLevel'));
     }
@@ -32,25 +32,25 @@ function handleInputs() {
         dryRun: (core.getInput('dryRun')=='true'),
     }
     if (inputs.dryRun) {
-        log.warn('📢 Dry run - nothing will be deleted')
+        core.info('📢 Dry run - nothing will be deleted');
     }
     log.debug(`inputs: ${JSON.stringify(inputs, null, 4)}`);
     return inputs;
 }
 
 /* every item of b is in a */
-function includesAll(a, b) {
+export function includesAll(a, b) {
     return b.every(v => a.includes(v));
 }
 
-function semVerProd(tags) {
+export function semVerProd(tags) {
     const regex = new RegExp(SEMVERREGEXP);
     return tags.reduce((result, tag) => {
         return result || (tag.match(regex) == tag);
     }, false);
 }
 
-function identifyVersion(tags) {
+export function identifyVersion(tags) {
     return tags.reduce((result, tag) => {
         const splitTag = splitEnv(tag, '-', 1);
         result[splitTag[0]] = splitTag[1] || true;
@@ -58,7 +58,7 @@ function identifyVersion(tags) {
     },{});
 }
 
-function getVersionsForDeletion(inputs, versions) {
+export function getVersionsForDeletion(inputs, versions) {
     const toDelete = [];
     let oneTag = [];
     let oneWithoutTag = false;
@@ -87,5 +87,3 @@ function getVersionsForDeletion(inputs, versions) {
     core.setOutput("envlist", oneTag);
     return toDelete;
 }
-
-module.exports = { splitEnv, handleInputs, includesAll, semVerProd, getVersionsForDeletion, identifyVersion };
