@@ -1,0 +1,17 @@
+name: 'act-local-test'
+on: workflow_dispatch
+
+jobs:
+  act-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          path: "purge-docker-registry-action"
+      - uses: ./
+        with:
+          packageName: yeap-ui-modelisation
+          organisation: yeapAi
+          token: ${{ secrets.GITHUB_TOKEN }}
+          dryRun: true
+          logLevel: trace
