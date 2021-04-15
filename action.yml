@@ -19,7 +19,7 @@ inputs:
     default: 100
   keepDays:
     description: 'how many days before eligible for deletion'
-    default: 15
+    default: 30
   dryRun:
     description: 'Dry run'
     default: false
@@ -29,8 +29,8 @@ inputs:
 outputs:
   deleted:
     description: 'Versions selected for deletion'
-  envlist:
-    description: 'Env list from keep list'
+  envList:
+    description: 'List environnement with 1 outdated version kept'
 runs:
   using: 'node12'
   main: 'dist/index.js'

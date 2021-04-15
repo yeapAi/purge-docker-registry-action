@@ -84,7 +84,7 @@ function getVersionsForDeletion(inputs, versions) {
     log.debug(toDelete);
     core.setOutput("deleted", toDelete);
     log.info(`Keeping 1 expired tag for : ${oneTag}`);
-    core.setOutput("envlist", oneTag);
+    core.setOutput("envList", oneTag);
     return toDelete;
 }
 

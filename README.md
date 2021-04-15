@@ -1,9 +1,9 @@
 # purge-docker-registry-action
 
-Github action to remove Yeap old docker image.
+Github action to remove Yeap outdated docker image.
 
-- Deletion is based on `keepDays` parameter. Version upgraded or created during the conservation period will not be deleted
-- This action doesn't remove image with a tag starting with a production version ( vX.Y.Z )
+- Deletion is based on `keepDays` parameter. Version upgraded or created during the conservation period will not be deleted.
+- This action doesn't remove image with a tag starting with a production version ( vX.Y.Z or vX.Y.Z.A or vX.Y.Z.A-hotfix )
 - This action doesn't remove the last version outside of the conservation period for every environnement
 
 ## local test with act
@@ -14,6 +14,52 @@ Github action to remove Yeap old docker image.
 ```console
 npm run build && act -j act-test -P ubuntu-latest=nektos/act-environments-ubuntu:18.04 -s GITHUB_TOKEN=XXXXXXXXXXX
 ```
+
+## Usage
+
+```yaml
+on:
+  schedule:
+    - cron:  '* 9 * * 1'
+
+name: Purge image docker
+jobs:
+  purge:
+    name: Purge image
+    runs-on: ubuntu-latest
+    steps:
+      uses: yeapAi/purge-docker-registry-action@v1.0.1
+      with:
+        token: ${{ secrets.PAT }}
+        packageName: yeap-modelisation-api
+        organisation: yeapAi
+        dryRun: false
+        logLevel: trace
+```
+
+## Parameters
+
+### inputs
+
+| Name                | Type     | Default/Require | Description                        |
+|---------------------|----------|-----------------|-------------------|
+| `packageType`       | String   | Required        | Type of package (container: new registry docker, ) |
+| `packageName`       | String   | Required        | Package name, must match the registry name in <https://github.com/orgs/ORG/packages> |
+| `organisation`      | String   | Required        | Organisation |
+| `token`             | String   | Required        | Token (needs to be able to delete package) |
+| `pagination`        | Integer  | `100`           | Paginate package lookup to X items by query  |
+| `keepDays`          | Integer  | `30`            | Keep all package upadte or created last X days |
+| `dryRun`            | Boolean  | `false`         | Activate dry run |
+| `logLevel`          | String   | `info`          | Log level (trace, debug, info, warn, error) |
+
+### outputs
+
+Following outputs are available
+
+| Name          | Type    | Description                           |
+|---------------|---------|---------------------------------------|
+| `deleted`     | Json    | Output version to delete as json text |
+| `envList`     | Array   | List environment having 1 outdated version kept |
 
 ## Exemples
 
