@@ -19,7 +19,7 @@ function deleteVersions(inputs, versions) {
 async function deleteVersion(inputs, versionId) {
     log.debug(`Querying: GET /orgs/${inputs.organisation}/packages/${inputs.packageType}/${inputs.packageName}/versions`);
     const octokit = github.getOctokit(inputs.token);
-    const result = await octokit.request('DELETE  /orgs/{org}/packages/{package_type}/{package_name}/versions/{package_version_id}', {
+    const result = await octokit.rest.packages.deletePackageVersionForOrg({
         org: inputs.organisation,
         package_type: inputs.packageType,
         package_name: inputs.packageName,
