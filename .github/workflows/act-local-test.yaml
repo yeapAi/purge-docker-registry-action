@@ -10,8 +10,9 @@ jobs:
           path: "purge-docker-registry-action"
       - uses: ./
         with:
-          packageName: yeap-ui-modelisation
+          packageName: yeap-modelisation-db
           organisation: yeapAi
           token: ${{ secrets.GITHUB_TOKEN }}
           dryRun: true
           logLevel: trace
+          keepDays: 15
